@@ -1,0 +1,8 @@
+"UnlitGeneric"
+{
+	"$basetexture" "adv_colour/null"
+	"$vertexcolor" 		1
+	"$vertexalpha" 		1
+	"$nolod" 			1
+	
+}

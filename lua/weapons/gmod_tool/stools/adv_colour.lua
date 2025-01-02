@@ -244,27 +244,29 @@ TOOL.ClientConVar[ "index" ] = 0
 ---@param Data AdvColourData
 local function SetColour( Player, Entity, Data )
 
-	if ( Data.Color && Data.Color.a < 255 && Data.RenderMode == 0 ) then
-		Data.RenderMode = 1
-	end
-	
-	if Data.Index > 0 then
-		local col = Color( Data.Color.r, Data.Color.g, Data.Color.b, Data.Color.a )
-		
-		if Data.ResetIndex then
-			---INFO: Behavior to set this to nil is to clear adv_colour_mat field
-			---which causes a color reset
-			---@diagnostic disable-next-line
-			col = nil
+	for index, colorData in pairs(Data.ColorData) do
+		if ( colorData.Color && colorData.Color.a < 255 && Data.RenderMode == 0 ) then
+			Data.RenderMode = 1
 		end
 		
-		Entity:SetSubColor( Data.Index-1, col )
-	else
-		if ( Data.Color ) then Entity:SetColor( Color( Data.Color.r, Data.Color.g, Data.Color.b, Data.Color.a ) ) end
+		if index > 0 then
+			local col = Color( colorData.Color.r, colorData.Color.g, colorData.Color.b, colorData.Color.a )
+			
+			if colorData.Reset then
+				---INFO: Behavior to set this to nil is to clear adv_colour_mat field
+				---which causes a color reset
+				---@diagnostic disable-next-line
+				col = nil
+			end
+			
+			Entity:SetSubColor( index-1, col )
+		else
+			if ( colorData.Color ) then Entity:SetColor( Color( colorData.Color.r, colorData.Color.g, colorData.Color.b, colorData.Color.a ) ) end
+		end
 	end
-	
+
 	if ( Data.RenderMode ) then Entity:SetRenderMode( Data.RenderMode ) end
-	if ( Data.RenderFX ) then Entity:SetRenderFX( Data.RenderFX ) end
+	if ( Data.RenderFX ) then Entity:SetRenderFX( Data.RenderFX ) end	
 
 	duplicator.StoreEntityModifier( Entity, "adv_colour", Data )
 	
@@ -291,8 +293,10 @@ function TOOL:LeftClick( trace )
 		local mode = self:GetClientNumber( "mode", 0 )
 		local fx = self:GetClientNumber( "fx", 0 )
 		local index = self:GetClientNumber( "index", 0 )
+
+		local data = { ColorData = { [index] = { Color = Color(r, g, b, a) } }, RenderMode = mode, RenderFX = fx }
 		
-		SetColour( self:GetOwner(), ent, { Index = index, Color = Color( r, g, b, a ), RenderMode = mode, RenderFX = fx } )
+		SetColour( self:GetOwner(), ent, data )
 
 		return true
 		
@@ -311,7 +315,8 @@ function TOOL:RightClick( trace )
 		if ( CLIENT ) then return true end
 	
 		local index = self:GetClientNumber( "index", 0 )
-		SetColour( self:GetOwner(), ent, { Index = index, ResetIndex = true, Color = Color( 255, 255, 255, 255 ), RenderMode = 0, RenderFX = 0 } )
+		local data = { ColorData = {[index] = {Reset = true, Color = color_white}}, RenderMode = 0, RenderFX = 0 }
+		SetColour( self:GetOwner(), ent, data )
 		return true
 	
 	end
@@ -322,7 +327,7 @@ function TOOL:Reload( trace )
 	
 	if SERVER and game.SinglePlayer() then
 		local player = Entity(1)
-		---INFO: In singleplayer, `Entity(1)` is a `Player`. We type cast to make this clear
+		---INFO: In singleplayer, `Entity(1)` is a `Player`. We typecast to make this clear
 		---@cast player Player
 		player:SendLua("LocalPlayer():GetActiveWeapon():GetToolObject():Reload()")
 		return true

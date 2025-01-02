@@ -17,9 +17,12 @@
 ---@class AdvColourCPanel: ControlPanel
 ---@field Int AdvColourInt
 
----@class AdvColourData
----@field Index integer
----@field ResetIndex boolean?
+---@class ColourData
 ---@field Color Color?
+---@field Reset boolean?
+
+---@class AdvColourData
+---@field ResetIndex boolean?
+---@field ColorData ColourData[]
 ---@field RenderFX number?
 ---@field RenderMode number?

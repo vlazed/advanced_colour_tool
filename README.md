@@ -7,8 +7,8 @@ This is a public, working repository for the [Advanced Colour Tool](https://stea
 
 ## Installation
 If you want to use this in GMod, do the following steps:
-1. Click the Green <> Code button, and Download Zip
-2. Extract the folder (probably called `advanced_colour_tool-main`) into your `garrysmod/addons` directory
+1. Click the Green "<> Code" button, and click "Download Zip", and
+2. Extract the folder (probably called `advanced_colour_tool-main`) into your `garrysmod/addons` directory.
 3. If you are currently running a game, run `reload_legacy_addons`. Otherwise, the fixed version should now take precedence over the workshop version.
 
 ## Disclaimer

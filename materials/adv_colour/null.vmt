@@ -1,5 +1,6 @@
 "UnlitGeneric"
 {
+	// We use a local copy of null.vmt, to circumvent the case where a map could override the null material
 	"$basetexture" "adv_colour/null"
 	"$vertexcolor" 		1
 	"$vertexalpha" 		1

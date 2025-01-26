@@ -22,9 +22,16 @@ function ENT:SetSubMaterial( ind, str, ignore )
 	self._adv_colours_flush = true
 	
 	self._adv_colours_mats = self._adv_colours_mats or {}
-	self._adv_colours_mats[ind] = str and Material( str ) or nil
+	-- Restores previous behavior of resetting all submaterials
+	if not ind then
+		for i, _ in ipairs(self:GetMaterials()) do
+			self._adv_colours_mats[i-1] = nil
+		end
+	else
+		self._adv_colours_mats[ind] = str and Material( str ) or nil
+	end
 	
-	if !ignore then
+	if !ignore and ind then
 		if SERVER then
 			net.Start("adv_colour_mat")
 				net.WriteEntity( self )

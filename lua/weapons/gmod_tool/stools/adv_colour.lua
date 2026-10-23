@@ -31,11 +31,11 @@ function ENT:SetSubMaterial( ind, str, ignore )
 		self._adv_colours_mats[ind] = str and Material( str ) or nil
 	end
 	
-	if !ignore and ind then
+	if !ignore then
 		if SERVER then
 			net.Start("adv_colour_mat")
 				net.WriteEntity( self )
-				net.WriteInt( ind, 16 )
+				net.WriteInt( ind or -1, 16 )
 				net.WriteString( str )
 			net.Broadcast()
 		end
@@ -53,7 +53,7 @@ function ENT:SetSubColor( ind, color )
 		net.Start("adv_colour")
 			net.WriteEntity( self )
 			net.WriteInt( ind, 16 )
-			net.WriteBool( !color and true or false )
+			net.WriteBool( not color )
 			if color then 
 				net.WriteColor( color ) 
 			end
@@ -65,7 +65,7 @@ if SERVER then
 
 	hook.Add("PlayerInitialSpawn", "adv_colour", function( ply )
 		for k, v in pairs( ents.GetAll() ) do
-			if v._adv_colours and table.Count(v._adv_colours) > 0 then
+			if v._adv_colours and next(v._adv_colours) then
 				for i, o in pairs(v._adv_colours) do
 					net.Start("adv_colour")
 						net.WriteEntity( v )
@@ -75,7 +75,7 @@ if SERVER then
 					net.Send(ply)
 				end			
 			end
-			if v._adv_colours_mats and table.Count(v._adv_colours_mats) > 0 then
+			if v._adv_colours_mats and next(v._adv_colours_mats) then
 				for i, o in pairs(v._adv_colours_mats) do
 					net.Start("adv_colour_mat")
 						net.WriteEntity( v )
@@ -86,138 +86,6 @@ if SERVER then
 			end
 		end
 	end)
-
-else
-
-	net.Receive("adv_colour_mat", function()
-		local ent, ind, str = net.ReadEntity(), net.ReadInt( 16 ), net.ReadString()
-		ent._adv_colours_mats = ent._adv_colours_mats or {}
-		ent._adv_colours_mats[ind] = Material( str )
-		ent._adv_colours_flush = true
-	end)
-
-	net.Receive("adv_colour", function()
-		local ent, ind, reset, color = net.ReadEntity(), net.ReadInt( 16 ), net.ReadBool(), net.ReadColor()
-		
-		ent._adv_colours = ent._adv_colours or {}
-		ent._adv_colours[ind] = !reset and color or nil
-		ent._adv_colours_flush = true
-	end)
-	
-	---INFO: Originally used GMod's null material. However, maps can override this (see gm_floatingworlds_3_v2).
-	local null = Material( "adv_colour/null" )
-
-	hook.Remove("PreDrawOpaqueRenderables", "adv_colour")
-	hook.Add( "PreDrawOpaqueRenderables", "adv_colour", function( depth, skybox )
-		for k, v in pairs( ents.GetAll() ) do
-			if !v:IsPlayer() and v._adv_colours and table.Count(v._adv_colours) > 0 then
-				
-				v._adv_colours_mats = v._adv_colours_mats or {}
-				
-				if v._adv_colours_cache == nil then
-					local mat = {}
-					for k, v in pairs(v:GetMaterials()) do
-						mat[k-1] = Material(v)
-					end
-					v._adv_colours_cache = mat
-				end
-				
-				for index, mat in pairs(v._adv_colours_cache) do -- All of the submats to invisible
-					if v._adv_colours_mats[index] or v._adv_colours[index] then
-						if v._adv_colours_flush then 
-							v:_OldSetSubMaterial( index, nil ) 
-						end
-						render.MaterialOverrideByIndex( index, null )
-					end
-				end
-				
-				v._adv_colours_flush = false
-				
-				local color = v:GetColor()
-				
-				local lastkey = 0
-				
-				for k, v in pairs(v._adv_colours_mats) do
-					if k > lastkey then
-						lastkey = k
-					end
-				end
-				
-				for k, v in pairs(v._adv_colours) do
-					if k > lastkey then
-						lastkey = k
-					end
-				end
-				
-				for index, col in pairs(v._adv_colours_cache) do -- Draw all the submats we need
-					
-					if v._adv_colours_mats[index] or v._adv_colours[index] then
-						if v._adv_colours[index] then
-							render.SetColorModulation( v._adv_colours[index].r/255, v._adv_colours[index].g/255, v._adv_colours[index].b/255 )
-							render.SetBlend( v._adv_colours[index].a/255 )
-						else
-							render.SetColorModulation( color.r/255, color.g/255, color.b/255 )
-							render.SetBlend( color.a/255 )
-						end
-						
-						render.MaterialOverrideByIndex( index, v._adv_colours_mats[index] or v._adv_colours_cache[index] )
-						
-						v:DrawModel()
-						
-						render.SetColorModulation( 1, 1, 1 )
-						render.SetBlend( 1 )
-							
-						for index, mat in pairs(v._adv_colours_cache) do -- All of the submats to invisible
-							render.MaterialOverrideByIndex( index, null )
-						end
-					end
-				end
-				
-				for index, col in pairs(v._adv_colours_cache) do -- Draw the normal parts
-					
-					if v._adv_colours_mats[index] or v._adv_colours[index] then
-					
-					else
-						render.SetColorModulation( color.r/255, color.g/255, color.b/255 )
-						render.SetBlend( color.a/255 )
-						
-						render.MaterialOverrideByIndex( index, v._adv_colours_cache[index] )
-					end
-				end
-					
-				v:DrawModel()
-						
-				render.SetColorModulation( 1, 1, 1 )
-				render.SetBlend( 1 )
-				
-				for index, col in pairs(v._adv_colours_cache) do -- Reset the submats
-					render.MaterialOverrideByIndex( index, nil )
-				end
-				
-				v._adv_colours_resetmat = v:GetMaterial()
-				v:SetMaterial(null:GetName()) 
-				--v:SetNoDraw(true) -- Don't draw the default model
-			elseif v:GetNoDraw() then
-				--v:SetNoDraw(false)
-				
-				if v._adv_colours_mats and table.Count(v._adv_colours_mats) > 0 then
-					for i, o in pairs(v._adv_colours_mats) do
-						v:_OldSetSubMaterial( i, tostring(o) ) 
-					end
-				end
-			end
-		end
-	end)
-	
-	hook.Remove("PostDrawOpaqueRenderables", "adv_colour")
-	hook.Add( "PostDrawOpaqueRenderables", "adv_colour", function( depth, skybox )
-		for k, v in pairs( ents.GetAll() ) do
-			if !v:IsPlayer() and v._adv_colours and table.Count(v._adv_colours) > 0 then
-				v:SetMaterial( v._adv_colours_resetmat or "" )
-			end
-		end
-	end)
-	
 end
 
 if CLIENT then

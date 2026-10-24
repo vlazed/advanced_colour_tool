@@ -41,6 +41,7 @@ else
 		return entityInfo
 	end
 
+	local empty = {}
 	net.Receive("adv_colour_mat", function()
 		local ent, ind, str = net.ReadEntity(), net.ReadInt( 16 ), net.ReadString()
 		---@cast ent AdvancedColorEntity
@@ -51,8 +52,8 @@ else
 			ent._adv_colours_mats = {}
 		end
 		ent._adv_colours_flush = true
-		local hasColor = next(ent._adv_colours)
-		local hasMats = next(ent._adv_colours_mats)
+		local hasColor = next(ent._adv_colours or empty)
+		local hasMats = next(ent._adv_colours_mats or empty)
 		if hasColor or hasMats then
 			local entityInfo = advancedColorEntitySet[ent]
 			if not entityInfo then
@@ -76,8 +77,8 @@ else
 		ent._adv_colours = ent._adv_colours or {}
 		ent._adv_colours[ind] = color
 		ent._adv_colours_flush = flush
-		local hasColor = next(ent._adv_colours)
-		local hasMat = next(ent._adv_colours_mats)
+		local hasColor = next(ent._adv_colours or empty)
+		local hasMat = next(ent._adv_colours_mats or empty)
 		if hasColor or hasMat then
 			local entityInfo = advancedColorEntitySet[ent]
 			if not advancedColorEntitySet[ent] then
@@ -117,7 +118,7 @@ else
 				if not colorCache then
 					colorCache = {}
 					for k, v in ipairs(v:GetMaterials()) do
-						mat[k-1] = Material(v)
+						colorCache[k-1] = Material(v)
 					end
 					entityInfo[4] = colorCache
 				end

@@ -41,6 +41,11 @@ else
 		return entityInfo
 	end
 
+	local function removeEntity(entity)
+		advancedColorEntitySet[entity] = nil
+		refreshEntities()
+	end
+
 	local empty = {}
 	net.Receive("adv_colour_mat", function()
 		local ent, ind, str = net.ReadEntity(), net.ReadInt( 16 ), net.ReadString()
@@ -61,9 +66,12 @@ else
 			end
 			entityInfo[3] = ent._adv_colours_mats
 		elseif not hasColor and not hasMats then
-			advancedColorEntitySet[ent] = nil
-			refreshEntities()
+			removeEntity(ent)
 		end
+
+		ent:CallOnRemove("adv_colour_remove", function(ent, ...)
+			removeEntity(ent)
+		end)
 	end)
 
 	net.Receive("adv_colour", function()
@@ -107,6 +115,10 @@ else
 	hook.Remove("PreDrawOpaqueRenderables", "adv_colour")
 	hook.Add( "PreDrawOpaqueRenderables", "adv_colour", function( depth, skybox )
 		for k, v in ipairs(advancedColorEntities) do
+			if not IsValid(v) then
+				removeEntity(v)
+				continue
+			end
 			local entityInfo = advancedColorEntitySet[v]
 			if !v:IsPlayer() and entityInfo[1] then
 				-- Only process this entity once per tick

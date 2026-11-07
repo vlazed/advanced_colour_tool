@@ -49,6 +49,13 @@ else
 	local empty = {}
 	net.Receive("adv_colour_mat", function()
 		local ent, ind, str = net.ReadEntity(), net.ReadInt( 16 ), net.ReadString()
+		if not IsValid(ent) then return end
+
+		if ent:IsMarkedForDeletion() then
+			removeEntity(ent)
+			return
+		end
+
 		---@cast ent AdvancedColorEntity
 		ent._adv_colours_mats = ent._adv_colours_mats or {}
 		if ind >= 0 then
@@ -76,6 +83,12 @@ else
 
 	net.Receive("adv_colour", function()
 		local ent, ind, reset, color = net.ReadEntity(), net.ReadInt( 16 ), net.ReadBool()
+		if not IsValid(ent) then return end
+
+		if ent:IsMarkedForDeletion() then
+			removeEntity(ent)
+			return
+		end
 		---@cast ent AdvancedColorEntity
 		local color
 		if not reset then
